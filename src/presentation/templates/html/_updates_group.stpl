@@ -1,0 +1,25 @@
+<div class="change-group change-group--update">
+  <h3>Updates</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>PK</th><th>Column</th><th>Before</th><th>After</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for row in rows { %>
+        <% let pk_str = row.pk.iter().map(|(k, v)| format!("{}={}", k, v)).collect::<Vec<_>>().join(", "); %>
+        <% for (i, col_diff) in row.changed_columns.iter().enumerate() { %>
+          <tr class="op-update">
+            <% if i == 0 { %>
+              <td class="pk-cell" rowspan="<%= row.changed_columns.len() %>"><%= pk_str %></td>
+            <% } %>
+            <td><%= &col_diff.column %></td>
+            <td class="val-before"><%= &col_diff.before.to_string() %></td>
+            <td class="val-after"><%= &col_diff.after.to_string() %></td>
+          </tr>
+        <% } %>
+      <% } %>
+    </tbody>
+  </table>
+</div>

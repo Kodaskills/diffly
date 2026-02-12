@@ -1,0 +1,10 @@
+title: "[Q&A]: "
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: What's your question?
+      description: What are you asking?
+    validations:
+      required: true

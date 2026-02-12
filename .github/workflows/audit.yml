@@ -1,0 +1,22 @@
+name: Security audit
+
+on:
+  push:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+    tags-ignore:
+      - "diffly-*"
+  # schedule:
+  #   - cron: "0 0 * * *"
+
+jobs:
+  security_audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+      - uses: actions-rust-lang/audit@v1
+        with:
+          features: cli

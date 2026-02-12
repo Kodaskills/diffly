@@ -1,0 +1,37 @@
+<div class="table-section">
+  <div class="table-header">
+    <h2><%= changeset.target_schema %>.<%= table.table_name %></h2>
+    <div class="actions">
+      <input class="search-box" placeholder="Filter…" onkeyup="filterTable(this)">
+      <button class="toggle" onclick="exportTableCSV(this)">⬇ CSV</button>
+      <div class="badges">
+        <% if !table.inserts.is_empty() { %>
+          <span class="badge insert">+<%= table.inserts.len() %> insert<%= if table.inserts.len() > 1 { "s" } else { "" } %></span>
+        <% } %>
+        <% if !table.updates.is_empty() { %>
+          <span class="badge update">~<%= table.updates.len() %> update<%= if table.updates.len() > 1 { "s" } else { "" } %></span>
+        <% } %>
+        <% if !table.deletes.is_empty() { %>
+          <span class="badge delete">-<%= table.deletes.len() %> delete<%= if table.deletes.len() > 1 { "s" } else { "" } %></span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <% if !table.inserts.is_empty() { %>
+    <% let group_name = "Inserts"; %>
+    <% let rows = &table.inserts; %>
+    <% include!("_inserts_deletes_group.stpl"); %>
+  <% } %>
+
+  <% if !table.updates.is_empty() { %>
+    <% let rows = &table.updates; %>
+    <% include!("_updates_group.stpl"); %>
+  <% } %>
+
+  <% if !table.deletes.is_empty() { %>
+    <% let group_name = "Deletes"; %>
+    <% let rows = &table.deletes; %>
+    <% include!("_inserts_deletes_group.stpl"); %>
+  <% } %>
+</div>
