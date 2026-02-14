@@ -17,6 +17,8 @@ jobs:
   test:
     name: ${{ matrix.platform.os-name }} with rust ${{ matrix.toolchain }}
     runs-on: ${{ matrix.platform.runs-on }}
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
