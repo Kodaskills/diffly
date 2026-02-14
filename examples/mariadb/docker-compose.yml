@@ -1,0 +1,39 @@
+name: diffly
+services:
+  # ─── MariaDB 11 with source_db and target_db ───
+  mariadb:
+    image: mariadb:11.4
+    container_name: diffly-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_USER: diffly
+      MARIADB_PASSWORD: diffly
+      # Both databases are created in the init fixture
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+
+  # ─── Diffly diff engine ───
+  diff-engine:
+    build:
+      context: ../.. # Dockerfile is at project root
+      dockerfile: Dockerfile
+    container_name: diffly
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      RUST_LOG: diffly=info
+    volumes:
+      - ../../output:/app/output
+      - ./config.toml:/app/config.toml:ro
+
+volumes:
+  mariadb_data:

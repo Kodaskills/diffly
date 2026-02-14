@@ -1,0 +1,26 @@
+<div class="change-group change-group--<%= if group_name == "Inserts" { "insert" } else { "delete" } %>">
+  <h3><%= group_name %></h3>
+  <table>
+    <% if !rows.is_empty() { %>
+    <thead>
+      <tr>
+        <% for col in rows[0].data.keys() { %>
+          <th class="<%= if table.primary_key.contains(col) { "pk-cell" } else { "" } %>" onclick="sortTable(this)"><%= col %></th>
+        <% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% for row in rows { %>
+        <tr class="op-<%= if group_name == "Inserts" { "insert" } else { "delete" } %>">
+          <% for col_name in rows[0].data.keys() { %>
+            <% let v = row.data.get(col_name).unwrap_or(&serde_json::Value::Null); %>
+            <td class="<%= if table.primary_key.contains(col_name) { "pk-cell" } else if group_name == "Inserts" { "val-after" } else { "val-before" } %>">
+              <%= v.to_string() %>
+            </td>
+          <% } %>
+        </tr>
+      <% } %>
+    </tbody>
+    <% } %>
+  </table>
+</div>

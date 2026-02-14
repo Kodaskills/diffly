@@ -1,0 +1,45 @@
+name: diffly
+services:
+  # ─── MySQL 8 with source_db and target_db ───
+  mysql:
+    image: mysql:8.4
+    container_name: diffly-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: diffly
+      MYSQL_PASSWORD: diffly
+      # MySQL entrypoint runs *.sql from /docker-entrypoint-initdb.d/
+      # but only creates one database via MYSQL_DATABASE.
+      # Our fixture creates both databases itself.
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - mysql_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      # Use mysqladmin ping as root (mysqladmin is available inside the image)
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+
+  # ─── Diffly diff engine ───
+  diff-engine:
+    build:
+      context: ../.. # Dockerfile is at project root
+      dockerfile: Dockerfile
+    container_name: diffly
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      RUST_LOG: diffly=info
+    volumes:
+      - ../../output:/app/output
+      - ./config.toml:/app/config.toml:ro
+
+volumes:
+  mysql_data:

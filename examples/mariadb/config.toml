@@ -1,0 +1,54 @@
+# ──────────────────────────────────────────────────
+# Diffly — MariaDB example configuration
+# Used with: docker compose -f docker-compose.mariadb.yml up --build
+# ──────────────────────────────────────────────────
+
+[source]
+driver   = "mariadb"
+host     = "mariadb"
+port     = 3306
+dbname   = "source_db"
+user     = "diffly"
+password = "diffly"
+schema   = "source_db"
+
+[target]
+driver   = "mariadb"
+host     = "mariadb"
+port     = 3306
+dbname   = "target_db"
+user     = "diffly"
+password = "diffly"
+schema   = "target_db"
+
+[diff]
+[[diff.tables]]
+name        = "pricing_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "discount_tiers"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "shipping_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "tax_rules"
+primary_key = ["region_code", "product_category"]
+
+[[diff.tables]]
+name        = "no_change_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "nullable_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "quoted_rules"
+primary_key = ["id"]
+
+[output]
+dir = "./output"

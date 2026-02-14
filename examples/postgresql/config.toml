@@ -1,0 +1,62 @@
+[source]
+driver = "postgres"
+host = "postgres"
+port = 5432
+dbname = "diffly"
+user = "diffly"
+password = "diffly"
+schema = "sandbox_admin1"
+
+[target]
+driver = "postgres"
+host = "postgres"
+port = 5432
+dbname = "diffly"
+user = "diffly"
+password = "diffly"
+schema = "staging"
+
+[diff]
+[[diff.tables]]
+name = "pricing_rules"
+primary_key = ["id"]
+excluded_columns = ["created_at", "updated_at"]
+
+[[diff.tables]]
+name = "discount_tiers"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "shipping_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "tax_rules"
+primary_key = ["region_code", "product_category"]
+
+[[diff.tables]]
+name = "no_change_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "nullable_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "jsonb_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "empty_staging_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "empty_sandbox_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name = "quoted_rules"
+primary_key = ["id"]
+
+[output]
+dir = "./output"

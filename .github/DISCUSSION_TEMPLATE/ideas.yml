@@ -1,0 +1,10 @@
+title: "[Idea]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What's your idea?
+      description: "How might we make this project better?"
+    validations:
+      required: true

@@ -1,0 +1,40 @@
+name: diffly
+services:
+  # ─── SQLite init: creates source.db and target.db from fixtures ───
+  sqlite-init:
+    image: alpine:3.20
+    container_name: diffly-sqlite-init
+    volumes:
+      - ./init.sql:/fixtures/init.sql:ro
+      - ./init_source.sql:/fixtures/init_source.sql:ro
+      - sqlite_data:/data
+    command: >
+      sh -c "
+        apk add --no-cache sqlite &&
+        [ -f /data/target.db ] && [ -f /data/source.db ] && {
+          echo 'Databases already loaded.'
+          exit 0
+        }
+        sqlite3 /data/target.db < /fixtures/init.sql &&
+        sqlite3 /data/source.db < /fixtures/init_source.sql &&
+        echo 'SQLite databases initialized.'
+      "
+
+  # ─── Diffly diff engine ───
+  diff-engine:
+    build:
+      context: ../.. # Dockerfile is at project root
+      dockerfile: Dockerfile
+    container_name: diffly
+    depends_on:
+      sqlite-init:
+        condition: service_completed_successfully
+    environment:
+      RUST_LOG: diffly=info
+    volumes:
+      - ../../output:/app/output
+      - ./config.toml:/app/config.toml:ro
+      - sqlite_data:/data
+
+volumes:
+  sqlite_data:

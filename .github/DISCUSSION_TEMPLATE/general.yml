@@ -1,0 +1,10 @@
+title: ""
+labels: []
+body:
+  - type: textarea
+    id: discussion
+    attributes:
+      label: Discussion
+      description: What would you like to talk about?
+    validations:
+      required: true
