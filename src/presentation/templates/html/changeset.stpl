@@ -1,0 +1,11 @@
+<% let changeset = self.changeset; %>
+
+<% include!("_header.stpl"); %>
+
+<% for table in &changeset.tables { %>
+  <% if !table.is_empty() { %>
+    <% include!("_table.stpl"); %>
+  <% } %>
+<% } %>
+
+<% include!("_footer.stpl"); %>

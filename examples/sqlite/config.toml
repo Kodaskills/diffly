@@ -1,0 +1,52 @@
+# ──────────────────────────────────────────────────
+# Diffly — SQLite example configuration
+# Used with: docker compose -f docker-compose.sqlite.yml up --build
+#
+# For SQLite:
+#   - `dbname` is the path to the .db file
+#   - `schema` is ignored (SQLite has no schemas)
+#   - `host`, `port`, `user`, `password` are ignored
+#   - source and target must be separate database files
+# ──────────────────────────────────────────────────
+
+[source]
+driver   = "sqlite"
+host     = "localhost"  # ignored for SQLite
+port     = 0            # ignored for SQLite
+dbname   = "/data/source.db"
+user     = ""           # ignored for SQLite
+password = ""           # ignored for SQLite
+schema   = ""           # ignored for SQLite
+
+[target]
+driver   = "sqlite"
+host     = "localhost"
+port     = 0
+dbname   = "/data/target.db"
+user     = ""
+password = ""
+schema   = ""
+
+[diff]
+[[diff.tables]]
+name        = "pricing_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "discount_tiers"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "shipping_rules"
+primary_key = ["id"]
+
+[[diff.tables]]
+name        = "tax_rules"
+primary_key = ["region_code", "product_category"]
+
+[[diff.tables]]
+name        = "no_change_rules"
+primary_key = ["id"]
+
+[output]
+dir = "./output"

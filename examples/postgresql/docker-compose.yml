@@ -1,0 +1,38 @@
+name: diffly
+services:
+  # ─── PostgreSQL with auto-imported fixtures ───
+  postgres:
+    image: postgres:16-alpine
+    container_name: diffly-postgresql
+    environment:
+      POSTGRES_DB: diffly
+      POSTGRES_USER: diffly
+      POSTGRES_PASSWORD: diffly
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - postgresql_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U diffly -d diffly"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  # ─── Rust diff engine ───
+  diff-engine:
+    build:
+      context: ../.. # Dockerfile is at project root
+      dockerfile: Dockerfile
+    container_name: diffly
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      RUST_LOG: diffly_diff=info
+    volumes:
+      - ../../output:/app/output
+      - ./config.toml:/app/config.toml:ro
+
+volumes:
+  postgresql_data:

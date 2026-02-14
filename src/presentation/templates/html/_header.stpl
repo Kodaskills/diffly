@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diffly - Changeset <%= changeset.changeset_id %></title>
+
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e;
+    --green-bg: #0d2818; --green-border: #238636; --green-text: #3fb950;
+    --red-bg: #2d1117; --red-border: #da3633; --red-text: #f85149;
+    --orange-bg: #2a1e00; --orange-border: #d29922; --orange-text: #e3b341;
+    --blue: #58a6ff;
+  }
+  html[data-theme="light"] {
+      --bg:#ffffff; --surface:#f6f8fa; --border:#d0d7de; --text:#1f2328; --muted:#636c76;
+      --green-bg: #dafbe1; --green-border: #1f883d; --green-text: #1a7431;
+      --red-bg: #ffebe9; --red-border: #c93c37; --red-text: #b3231a;
+      --orange-bg: #fff8c5; --orange-border: #9a6700; --orange-text: #825600;
+      --blue: #0550ae;
+    }  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); padding:2rem; line-height:1.5; }
+  .container { max-width:1200px; margin:0 auto; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  .meta { color:var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  button.toggle { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:0.3rem 0.7rem; cursor:pointer; }
+  .summary { display:flex; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem 1.5rem; min-width: 140px; }
+  .stat .num { font-size:2rem; font-weight:700; }
+  .stat .label { color:var(--muted); font-size: 0.85rem; text-transform:uppercase; letter-spacing:.05em; }
+  .stat.insert .num { color: var(--green-text); }
+  .stat.update .num { color: var(--orange-text); }
+  .stat.delete .num { color: var(--red-text); }
+  .table-section { background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:1.5rem; overflow:hidden; }
+  .table-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items: center; }
+  .table-header h2 { font-size: 1.1rem; font-weight: 600; }
+  .badges { display:flex; gap:.5rem; }
+  .badge { padding:.2rem .6rem; border-radius:12px; font-size:.75rem; font-weight:600; }
+  .badge.insert { background:var(--green-bg); color:var(--green-text); border:1px solid var(--green-border); }
+  .badge.update { background:var(--orange-bg); color:var(--orange-text); border:1px solid var(--orange-border); }
+  .badge.delete { background:var(--red-bg); color:var(--red-text); border:1px solid var(--red-border); }
+  .change-group { padding:.75rem 1.5rem; border-bottom:1px solid var(--border); }
+  .change-group:last-child { border-bottom: none; }
+  .change-group h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+  .change-group--insert h3 { color: var(--green-text); }
+  .change-group--update h3 { color: var(--orange-text); }
+  .change-group--delete h3 { color: var(--red-text); }
+  table { width:100%; border-collapse:collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: .5rem .75rem; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; }
+  th.asc::after, th.desc::after { content: ''; display: inline-block; margin-left: 0.5em; font-size: 0.8em; }
+  th.asc::after { content: '▲'; }
+  th.desc::after { content: '▼'; }
+  td { padding:.5rem .75rem; border-bottom:1px solid var(--border); font-family:'SF Mono',monospace; font-size: 0.8rem; word-break: break-all; }
+  tr:last-child td { border-bottom: none; }
+  .val-before { color: var(--red-text); text-decoration: line-through; background:rgba(248,81,73,.1); }
+  .val-after { color: var(--green-text); background:rgba(63,185,80,.1); }
+  .pk-cell { color:var(--blue); }
+  .op-insert { border-left: 3px solid var(--green-border); }
+  .op-update { border-left: 3px solid var(--orange-border); }
+  .op-delete { border-left: 3px solid var(--red-border); }
+  .search-box { padding:0.3rem 0.5rem; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); }
+  .actions { display:flex; gap:.5rem; align-items:center; }
+  @media print { body { background:white; color:black; } .toggle { display:none; } .table-section { page-break-inside: avoid; } }
+</style>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === "light" ? "dark" : "light";
+}
+function sortTable(th) {
+  const table = th.closest("table");
+  const wasAsc = th.classList.contains("asc");
+
+  // Reset all other headers in the same table
+  table.querySelectorAll("thead th").forEach(h => h.classList.remove("asc", "desc"));
+
+  // Set new state on the clicked header
+  if (wasAsc) {
+    th.classList.add("desc");
+  } else {
+    th.classList.add("asc");
+  }
+
+  // Perform sorting
+  const isAsc = th.classList.contains("asc");
+  const idx = Array.from(th.parentNode.children).indexOf(th);
+  const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+  rows.sort((a,b) => {
+    const A = a.children[idx].innerText;
+    const B = b.children[idx].innerText;
+    return isAsc
+      ? A.localeCompare(B, undefined, {numeric: true, sensitivity: 'base'})
+      : B.localeCompare(A, undefined, {numeric: true, sensitivity: 'base'});
+  });
+
+  rows.forEach(tr => table.querySelector("tbody").appendChild(tr));
+}
+function filterTable(input) {
+  const table = input.closest(".table-section").querySelector("table");
+  const term = input.value.toLowerCase();
+  table.querySelectorAll("tbody tr").forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
+  });
+}
+function exportTableCSV(btn) {
+  const table = btn.closest(".table-section").querySelector("table");
+  let csv = [];
+  table.querySelectorAll("tr").forEach(row => {
+    let cols = Array.from(row.children).map(td => `"${td.innerText.replace(/"/g,'""')}"`);
+    csv.push(cols.join(","));
+  });
+  const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "table_export.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</head>
+<body>
+<div class="container">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h1>Diffly</h1>
+    <button class="toggle" onclick="toggleTheme()">🌗 Theme</button>
+  </div>
+  <h2>📋 Changeset | <%= changeset.driver %></h2>
+  <div class="meta">
+    <strong><%= changeset.changeset_id %></strong><br>
+    <%= changeset.source_schema %> → <%= changeset.target_schema %> | <%= changeset.created_at %>
+  </div>
+  <div class="summary">
+    <div class="stat insert"><div class="num"><%= changeset.summary.total_inserts %></div><div class="label">Inserts</div></div>
+    <div class="stat update"><div class="num"><%= changeset.summary.total_updates %></div><div class="label">Updates</div></div>
+    <div class="stat delete"><div class="num"><%= changeset.summary.total_deletes %></div><div class="label">Deletes</div></div>
+    <div class="stat"><div class="num"><%= changeset.summary.tables_affected %></div><div class="label">Tables</div></div>
+  </div>
