@@ -35,7 +35,7 @@ use crate::infrastructure::db::sql_utils::pk_key;
 ///    - the source value ≠ base value  (admin changed it)
 ///    - the target value ≠ base value  (someone else changed it)
 ///    - source value ≠ target value    (they chose different values)
-///    → emit a `ConflictReport`.
+///    - emit a `ConflictReport`.
 /// 4. Auto-merged changes (only one side changed) require no action.
 pub struct ConflictService;
 
