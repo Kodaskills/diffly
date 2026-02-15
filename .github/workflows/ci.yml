@@ -26,92 +26,92 @@ jobs:
           - os-name: FreeBSD-x86_64
             runs-on: ubuntu-24.04
             target: x86_64-unknown-freebsd
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-FreeBSD-x86_64.tar.gz
+            bin: diffly
+            name: diffly-FreeBSD-x86_64.tar.gz
             skip-tests: true
           - os-name: Linux-x86_64
             runs-on: ubuntu-24.04
             target: x86_64-unknown-linux-musl
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-x86_64-musl.tar.gz
+            bin: diffly
+            name: diffly-Linux-x86_64-musl.tar.gz
           - os-name: Linux-aarch64
             runs-on: ubuntu-24.04
             target: aarch64-unknown-linux-musl
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-aarch64-musl.tar.gz
+            bin: diffly
+            name: diffly-Linux-aarch64-musl.tar.gz
           - os-name: Linux-arm
             runs-on: ubuntu-24.04
             target: arm-unknown-linux-musleabi
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-arm-musl.tar.gz
+            bin: diffly
+            name: diffly-Linux-arm-musl.tar.gz
           - os-name: Linux-i686
             runs-on: ubuntu-24.04
             target: i686-unknown-linux-musl
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-i686-musl.tar.gz
+            bin: diffly
+            name: diffly-Linux-i686-musl.tar.gz
             skip-tests: true
           - os-name: Linux-powerpc
             runs-on: ubuntu-24.04
             target: powerpc-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-powerpc-gnu.tar.gz
+            bin: diffly
+            name: diffly-Linux-powerpc-gnu.tar.gz
             skip-tests: true
           - os-name: Linux-powerpc64
             runs-on: ubuntu-24.04
             target: powerpc64-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-powerpc64-gnu.tar.gz
+            bin: diffly
+            name: diffly-Linux-powerpc64-gnu.tar.gz
             skip-tests: true
           - os-name: Linux-powerpc64le
             runs-on: ubuntu-24.04
             target: powerpc64le-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-powerpc64le-gnu.tar.gz
+            bin: diffly
+            name: diffly-Linux-powerpc64le-gnu.tar.gz
             skip-tests: true
           - os-name: Linux-riscv64
             runs-on: ubuntu-24.04
             target: riscv64gc-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-riscv64gc-gnu.tar.gz
+            bin: diffly
+            name: diffly-Linux-riscv64gc-gnu.tar.gz
           - os-name: Linux-s390x
             runs-on: ubuntu-24.04
             target: s390x-unknown-linux-gnu
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-Linux-s390x-gnu.tar.gz
+            bin: diffly
+            name: diffly-Linux-s390x-gnu.tar.gz
             skip-tests: true
           - os-name: NetBSD-x86_64
             runs-on: ubuntu-24.04
             target: x86_64-unknown-netbsd
-            bin: ${{ env.CRATE_NAME }}
-            name: ${{ env.CRATE_NAME }}-NetBSD-x86_64.tar.gz
+            bin: diffly
+            name: diffly-NetBSD-x86_64.tar.gz
             skip-tests: true
           - os-name: Windows-aarch64
             runs-on: windows-latest
             target: aarch64-pc-windows-msvc
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-Windows-aarch64.zip
+            bin: diffly.exe
+            name: diffly-Windows-aarch64.zip
             skip-tests: true
           - os-name: Windows-i686
             runs-on: windows-latest
             target: i686-pc-windows-msvc
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-Windows-i686.zip
+            bin: diffly.exe
+            name: diffly-Windows-i686.zip
             skip-tests: true
           - os-name: Windows-x86_64
             runs-on: windows-latest
             target: x86_64-pc-windows-msvc
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-Windows-x86_64.zip
+            bin: diffly.exe
+            name: diffly-Windows-x86_64.zip
           - os-name: macOS-x86_64
             runs-on: macOS-latest
             target: x86_64-apple-darwin
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-Darwin-x86_64.tar.gz
+            bin: diffly.exe
+            name: diffly-Darwin-x86_64.tar.gz
           - os-name: macOS-aarch64
             runs-on: macOS-latest
             target: aarch64-apple-darwin
-            bin: ${{ env.CRATE_NAME }}.exe
-            name: ${{ env.CRATE_NAME }}-Darwin-aarch64.tar.gz
+            bin: diffly.exe
+            name: diffly-Darwin-aarch64.tar.gz
         toolchain:
           - stable
         include:
@@ -119,13 +119,13 @@ jobs:
               os-name: Linux-x86_64
               runs-on: ubuntu-24.04
               target: x86_64-unknown-linux-musl
-              bin: ${{ env.CRATE_NAME }}
+              bin: diffly
             toolchain: beta
           - platform:
               os-name: Linux-x86_64
               runs-on: ubuntu-24.04
               target: x86_64-unknown-linux-musl
-              bin: ${{ env.CRATE_NAME }}
+              bin: diffly
             toolchain: nightly
     steps:
       - uses: actions/checkout@v4
@@ -174,7 +174,7 @@ jobs:
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v1
         with:
-          executable-name: ${{ env.CRATE_NAME }}
+          executable-name: diffly
           target: ${{ matrix.platform.target }}
           changes-file: CHANGELOG.md
         if: matrix.toolchain == 'stable'
