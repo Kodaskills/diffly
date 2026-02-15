@@ -86,6 +86,50 @@ by validating the result, not just the process.
 > Diffly is to databases what `git diff` is to source code — but for data, not schema.
 
 
+## 🧬 3-Way Merge and Conflict Detection
+
+> Diffly can perform a 3-way merge to not only see the difference between a source and a target, but to understand how both have changed relative to a common ancestor, making it easy to detect conflicting changes.
+
+This process works in two steps:
+
+### Step 1: Create a Snapshot
+
+First, create a snapshot of your database when it's in a known "base" or "common ancestor" state. This command inspects the database defined in your config and saves its state to a snapshot directory.
+
+```bash
+# Create a snapshot from the database configured as `target`
+diffly snapshot --out ./my-snapshot
+```
+
+### Step 2: Check for Conflicts
+
+Later, after changes have been made to your databases, run the `check-conflicts` command. This compares your current `source` and `target` databases against the snapshot to identify divergent changes.
+
+```bash
+# Compare the current source and target databases against the snapshot
+diffly check-conflicts --config ./diffly.toml --snapshot ./my-snapshot
+```
+
+The result is a rich diff that shows you not just the final state, but how you got there, clearly identifying rows that were changed in the source, the target, or even conflicting changes made to both.
+
+🚨 **IMPORTANT — SNAPSHOT CONSISTENCY REQUIRED**
+
+Diffly’s conflict detection is only valid if the snapshot reflects the **exact state** of the target database at snapshot time.
+
+If the target database changes after the snapshot is created:
+
+- conflicts may be missed  
+- valid changes may be flagged incorrectly  
+- generated diffs may be unsafe to apply  
+
+**Always ensure one of the following:**
+
+✅ Snapshot is taken immediately before diff  
+✅ Target database is locked or frozen during snapshot  
+✅ No writes occur between snapshot and diff
+
+This constraint is fundamental to safe 3-way merge behavior.
+
 ## 🏛️ Architecture
 
 ```mermaid
@@ -94,33 +138,56 @@ config:
   theme: neutral
   look: handDrawn
 ---
-graph LR
-    SDB[(Sandbox<br/>Source DB)]
-    TDB[(Staging<br/>Target DB)]
+flowchart LR
+    SDB[(Source DB)]
+    TDB[(Target DB)]
     Diffly[Diffly<br/>Diff Engine]
-    JSON[Machine exchange JSON Format]
-    SQL[Migration Atomic SQL]
-    HTML[Report HTML]
     
+    subgraph DIFFLY_ENGINE["Diffly Engine"]
+      direction TB
+      DIFF[Diff<br/>Command]
+      JSON[Diff JSON Format]
+      SQL[Migration Atomic SQL]
+      HTML[Diff Report HTML]
+      subgraph MERGE["3 Way Merge"]
+          SNAP[Snapshot<br/>Command JSON]
+          SNAPJSON[Snapshot JSON]
+          CONFLICTS[Check-Conflicts<br/>Command]
+      end
+    end
+
     SDB -->|Fetch Info| Diffly
     TDB -->|Fetch Info| Diffly
-    Diffly -->|Generate Diff| JSON
-    Diffly -->|Generate Diff| SQL
-    Diffly -->|Generate Diff| HTML
-    
+
+    Diffly -->|diff| DIFF
+    DIFF -->|generates| JSON
+    DIFF -->|generates| SQL
+    DIFF -->|generates| HTML
+
+    Diffly -->|snapshot| SNAP
+    SNAP -->|generates| SNAPJSON
+    Diffly -->|check-conflicts| CONFLICTS
+    CONFLICTS -->|Uses| SNAPJSON
+
     style SDB fill:#e1f5ff
     style TDB fill:#f3e5f5
     style Diffly fill:#fff3e0
+    style DIFF fill:#fffde7
     style JSON fill:#e8f5e9
     style SQL fill:#fce4ec
     style HTML fill:#f1f8e9
+    style SNAP fill:#e3fcec
+    style CONFLICTS fill:#ffe0e0
+    style SNAPJSON fill:#dcedc8
+    style DIFFLY_ENGINE fill:#f7fafc,stroke:#aaa,stroke-width:2px
+    style MERGE fill:#e1f0fa,stroke:#7dc5f3,stroke-width:2px
 ```
 
 ## 🌿 Dialects
 
-Today, **Diffly** is firstly focused, with big efforts, on Postgresql. We have started to implement other dialects where sometimes, for now, you could encounter some errors.  We'll fix them in future versions. Dialects are:
+Today, **Diffly** is implements these dialects:
 
-- <img src="https://www.vectorlogo.zone/logos/postgresql/postgresql-icon.svg"  alt="Postgresql"  width="20"  height="20"> Postgresql ⭐
+- <img src="https://www.vectorlogo.zone/logos/postgresql/postgresql-icon.svg"  alt="Postgresql"  width="20"  height="20"> Postgresql
 - <img src="https://www.vectorlogo.zone/logos/mysql/mysql-icon.svg"  alt="Mysql"  width="20"  height="20"> Mysql
 - <img src="https://www.vectorlogo.zone/logos/mariadb/mariadb-icon.svg"  alt="MariaDB"  width="20"  height="20"> MariaDB
 - <img src="https://www.vectorlogo.zone/logos/sqlite/sqlite-icon.svg"  alt="Sqlite"  width="20"  height="20"> Sqlite
@@ -129,7 +196,7 @@ Please feel free to fix or add new dialect by forking this repository and use a 
 
 ## ⚡ Quick Start
 
-### 🐳 Run all once as cli in Docker
+### 🐳 Run all once as cli for a diff in Docker
 
 ```bash
 # Start PostgreSQL + fixtures import + diff execution
@@ -156,13 +223,13 @@ docker compose -f examples/postgresql/docker-compose.yml up postgres -d
 cp ./examples/postgresql/config.toml ./my-config.toml
 
 # 3. Build + run
-cargo run --features cli -- --config ./my-config
+cargo run --features cli -- --config ./my-config diff
 
 # 4. Dry run (cli summary only, pas de fichiers)
-cargo run --features cli -- --config ./my-config --dry-run
+cargo run --features cli -- --config ./my-config --dry-run diff
 
-# 5. Only one format
-cargo run --features cli -- --config ./my-config --format html #(or sql, or json)
+# 5. Only one format (json, html, sql)
+cargo run --features cli -- --config ./my-config --format html diff 
 ```
 
 ### 📚 Run as library
@@ -218,7 +285,7 @@ dir = "./output"
 Actually **Diffly** generates 3 formats:
 
 ### JSON
-Complete Changeset  with `before`/`after` for each modification, PK, modified columns, resume.
+Complete Changeset  with `before`/`after` for each modification, PK, modified columns, resume and the sql query to apply for each modification (be careful to run them inside an **atomic transaction**).
 
 ### SQL
 Atomic transaction  `BEGIN`/`COMMIT` with `DELETE` → `UPDATE` → `INSERT` (secure order), useful for data migration.
