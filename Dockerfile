@@ -18,4 +18,8 @@ WORKDIR /app
 COPY --from=builder /build/target/release/diffly /app/diffly
 
 ENTRYPOINT ["/app/diffly"]
-CMD ["--config", "config.toml"]
+# Default subcommand: override in docker-compose with e.g.
+#   command: ["diff", "--config", "diffly.toml"]
+#   command: ["snapshot", "--config", "diffly.toml", "--out", "/app/snapshot"]
+#   command: ["check-conflicts", "--config", "diffly.toml", "--snapshot", "/app/snapshot"]
+CMD ["diff", "--config", "diffly.toml"]

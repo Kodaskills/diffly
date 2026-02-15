@@ -29,6 +29,10 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    # Subcommand to run. Override to use snapshot or check-conflicts:
+    #   command: ["snapshot", "--config", "config.toml", "--out", "/app/snapshot"]
+    #   command: ["check-conflicts", "--config", "config.toml", "--snapshot", "/app/snapshot"]
+    command: ["diff", "--config", "config.toml"]
     environment:
       RUST_LOG: diffly=info
     volumes:
