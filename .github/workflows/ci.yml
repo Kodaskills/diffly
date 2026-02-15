@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - "**"
-    tags-ignore:
-      - "diffly-*"
+    tags:
+      - "v*"
   pull_request:
 
 env:
@@ -105,12 +105,12 @@ jobs:
           - os-name: macOS-x86_64
             runs-on: macOS-latest
             target: x86_64-apple-darwin
-            bin: diffly.exe
+            bin: diffly
             name: diffly-Darwin-x86_64.tar.gz
           - os-name: macOS-aarch64
             runs-on: macOS-latest
             target: aarch64-apple-darwin
-            bin: diffly.exe
+            bin: diffly
             name: diffly-Darwin-aarch64.tar.gz
         toolchain:
           - stable
