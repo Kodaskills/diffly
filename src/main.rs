@@ -46,17 +46,14 @@ enum Command {
 
     /// Capture a point-in-time snapshot of the target (target) DB.
     ///
-    /// Writes two files to <out>:
+    /// Writes two files to <config output dir/snapshots>:
     ///   snapshot.json      — all target rows per table
     ///   fingerprints.json  — per-table SHA-256 fingerprints
     ///
-    /// Call this at source-clone time. Pass <out> to `check-conflicts --snapshot`
+    /// Call this at target-clone time.
+    /// Use with `check-conflicts --snapshot`
     /// when you are ready to check for conflicts.
-    Snapshot {
-        /// Directory where snapshot.json and fingerprints.json are written.
-        #[arg(short, long, default_value = "snapshot")]
-        out: String,
-    },
+    Snapshot {},
 
     /// Diff + 3-way conflict detection against a stored snapshot.
     ///
@@ -65,8 +62,8 @@ enum Command {
     /// Exits with code 2 if conflicts are detected.
     CheckConflicts {
         /// Directory containing snapshot.json and fingerprints.json
-        /// (produced by `diffly snapshot --out <dir>`).
-        #[arg(short, long, default_value = "snapshot")]
+        /// (produced by `diffly snapshot`).
+        #[arg(short, long)]
         snapshot: String,
 
         /// Print a summary to stdout without writing any files.
@@ -100,7 +97,7 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Command::Diff { dry_run, format } => cmd_diff(&cfg, dry_run, &format, quiet).await,
-        Command::Snapshot { out } => cmd_snapshot(&cfg, &out, quiet).await,
+        Command::Snapshot {} => cmd_snapshot(&cfg, quiet).await,
         Command::CheckConflicts {
             snapshot,
             dry_run,
@@ -128,10 +125,16 @@ async fn cmd_diff(cfg: &AppConfig, dry_run: bool, format: &str, quiet: bool) -> 
 }
 
 /// `diffly snapshot` — capture target DB state.
-async fn cmd_snapshot(cfg: &AppConfig, out: &str, quiet: bool) -> Result<()> {
+async fn cmd_snapshot(cfg: &AppConfig, quiet: bool) -> Result<()> {
     if !quiet {
         println!("Capturing snapshot of target DB ({})…", cfg.target.schema);
     }
+
+    let timestamp = Local::now().format("%Y%m%d_%H%M%S");
+    let subdir_name = format!("{}_{}", "snapshot", timestamp);
+    let output_subdir = Path::new(&cfg.output.dir)
+        .join(&cfg.target.driver)
+        .join(&subdir_name);
 
     let (raw, perf) = diffly::snapshot_with_timing(cfg).await?;
 
@@ -141,11 +144,15 @@ async fn cmd_snapshot(cfg: &AppConfig, out: &str, quiet: bool) -> Result<()> {
         .map(|(table, rows)| (table.clone(), diffly::fingerprint(rows)))
         .collect();
 
-    std::fs::create_dir_all(out)
-        .with_context(|| format!("Failed to create snapshot directory: {}", out))?;
+    std::fs::create_dir_all(&output_subdir).with_context(|| {
+        format!(
+            "Failed to create snapshot directory: {}",
+            output_subdir.to_str().unwrap()
+        )
+    })?;
 
-    let snapshot_path = Path::new(out).join("snapshot.json");
-    let fp_path = Path::new(out).join("fingerprints.json");
+    let snapshot_path = Path::new(output_subdir.to_str().unwrap()).join("snapshot.json");
+    let fp_path = Path::new(output_subdir.to_str().unwrap()).join("fingerprints.json");
 
     std::fs::write(&snapshot_path, serde_json::to_string_pretty(&raw)?)
         .with_context(|| format!("Failed to write {}", snapshot_path.display()))?;
