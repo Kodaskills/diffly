@@ -156,13 +156,13 @@ jobs:
           args: "--locked --release --features cli"
           strip: true
           cross-version: 107433fa9d71d7eb506cd5bf5467bab89edb7a52
-      - name: Update CHANGELOG
-        id: changelog
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: requarks/changelog-action@v1
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          tag: ${{ github.ref_name }}
+      # - name: Update CHANGELOG
+      #   id: changelog
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   uses: requarks/changelog-action@v1
+      #   with:
+      #     token: ${{ env.GITHUB_TOKEN }}
+      #     tag: ${{ github.ref_name }}
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v1
         with:
