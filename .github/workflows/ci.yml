@@ -156,21 +156,13 @@ jobs:
           args: "--locked --release --features cli"
           strip: true
           cross-version: 107433fa9d71d7eb506cd5bf5467bab89edb7a52
-      - name: Get previous tag
-        id: previousTag
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          name=$(git --no-pager tag --sort=creatordate --merged ${{ github.ref_name }} | tail -2 | head -1)
-          echo "previousTag: $name"
-          echo "previousTag=$name" >> $GITHUB_ENV
       - name: Update CHANGELOG
         id: changelog
         if: startsWith(github.ref, 'refs/tags/')
         uses: requarks/changelog-action@v1
         with:
           token: ${{ env.GITHUB_TOKEN }}
-          fromTag: ${{ github.ref_name }}
-          toTag: ${{ env.previousTag }}
+          tag: ${{ github.ref_name }}
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v1
         with:
