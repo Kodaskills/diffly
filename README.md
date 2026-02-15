@@ -98,7 +98,7 @@ First, create a snapshot of your database when it's in a known "base" or "common
 
 ```bash
 # Create a snapshot from the database configured as `target`
-diffly snapshot --out ./my-snapshot
+diffly snapshot --config ./diffly.toml
 ```
 
 ### Step 2: Check for Conflicts
