@@ -156,8 +156,7 @@ pub fn snapshot_provider(data: BTreeMap<String, Vec<RowMap>>) -> MapSnapshotProv
 ///
 /// # Arguments
 /// * `cfg`                 — application configuration (same as [`run`])
-/// * `base`                — snapshot of target at **source-clone time**,
-///                           obtained via [`snapshot_provider`]
+/// * `base`                — snapshot of target at **source-clone time**, obtained via [`snapshot_provider`]
 /// * `stored_fps`          — per-table SHA-256 fingerprints stored at clone time
 /// * `current_target_rows` — current target rows per table
 ///
