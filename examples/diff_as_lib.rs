@@ -7,7 +7,7 @@
 //! 3. **Inspect the changeset** — traverse the diff result for custom logic
 //!
 //! Run with a config file:
-//!   cargo run --example diff_as_lib -- config.toml
+//!   cargo run --example diff_as_lib -- diffly.toml
 //!
 //! Run with the built-in programmatic config (needs a local PostgreSQL):
 //!   cargo run --example diff_as_lib
@@ -72,8 +72,8 @@ async fn programmatic_config() -> Result<()> {
     };
 
     let cfg = AppConfig {
-        source: db("sandbox_admin1"),
-        target: db("staging"),
+        source: db("source"),
+        target: db("target"),
         diff: DiffConfig {
             tables: vec![
                 TableConfig {

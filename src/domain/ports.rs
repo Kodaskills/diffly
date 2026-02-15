@@ -36,3 +36,18 @@ pub trait OutputWriter: Send + Sync {
     /// Extension of the produced file (e.g. "json", "sql", "html")
     fn extension(&self) -> &'static str;
 }
+
+/// Port: provides the base snapshot of a table taken at source-clone time.
+///
+/// The base snapshot is the state of target **at the moment the source was
+/// cloned**. It is stored externally (S3, DynamoDB, local file) by the
+/// orchestrator and injected into `ConflictService` at deploy time.
+///
+/// Implementations are provided by the caller — diffly has no knowledge of
+/// where or how the snapshot is persisted.
+///
+/// Returns `None` for a given table when no snapshot exists, in which case
+/// `ConflictService` skips the 3-way merge for that table (treats it as clean).
+pub trait SnapshotProvider: Send + Sync {
+    fn get(&self, table: &TableName) -> Option<&[RowMap]>;
+}

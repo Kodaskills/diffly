@@ -5,7 +5,7 @@ port = 5432
 dbname = "diffly"
 user = "diffly"
 password = "diffly"
-schema = "sandbox_admin1"
+schema = "source"
 
 [target]
 driver = "postgres"
@@ -14,7 +14,7 @@ port = 5432
 dbname = "diffly"
 user = "diffly"
 password = "diffly"
-schema = "staging"
+schema = "target"
 
 [diff]
 [[diff.tables]]
@@ -47,11 +47,11 @@ name = "jsonb_rules"
 primary_key = ["id"]
 
 [[diff.tables]]
-name = "empty_staging_rules"
+name = "empty_target_rules"
 primary_key = ["id"]
 
 [[diff.tables]]
-name = "empty_sandbox_rules"
+name = "empty_source_rules"
 primary_key = ["id"]
 
 [[diff.tables]]

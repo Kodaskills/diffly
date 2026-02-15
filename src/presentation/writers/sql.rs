@@ -98,7 +98,7 @@ impl OutputWriter for SqlWriter {
     }
 }
 
-fn pk_where_clause(pk: &BTreeMap<String, Value>, dialect: &dyn QueryDialect) -> String {
+pub(crate) fn pk_where_clause(pk: &BTreeMap<String, Value>, dialect: &dyn QueryDialect) -> String {
     pk.iter()
         .map(|(col, val)| {
             let col_q = dialect.quote_ident(col);
@@ -112,7 +112,7 @@ fn pk_where_clause(pk: &BTreeMap<String, Value>, dialect: &dyn QueryDialect) -> 
         .join(" AND ")
 }
 
-fn set_clause(columns: &[ColumnDiff], dialect: &dyn QueryDialect) -> String {
+pub(crate) fn set_clause(columns: &[ColumnDiff], dialect: &dyn QueryDialect) -> String {
     columns
         .iter()
         .map(|c| {
@@ -126,7 +126,7 @@ fn set_clause(columns: &[ColumnDiff], dialect: &dyn QueryDialect) -> String {
         .join(", ")
 }
 
-fn insert_columns_values(
+pub(crate) fn insert_columns_values(
     data: &BTreeMap<String, Value>,
     dialect: &dyn QueryDialect,
 ) -> (String, String) {

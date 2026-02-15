@@ -5,6 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
+use crate::domain::fingerprint::fingerprint;
 use crate::domain::table_diff::RowMap;
 use crate::domain::{
     changeset::Changeset,
@@ -78,29 +79,36 @@ impl DiffService {
                 let source_rows = source_rows?;
                 let target_rows = target_rows?;
 
-                Ok::<_, anyhow::Error>(differ.diff_table(
-                    &source_rows,
-                    &target_rows,
-                    &pk_cols,
-                    &table_name,
-                ))
+                let diff = differ.diff_table(&source_rows, &target_rows, &pk_cols, &table_name);
+
+                Ok::<_, anyhow::Error>((diff, source_rows, target_rows))
             });
 
             handles.push(handle);
         }
 
-        // Collect results
+        // Collect results: (TableDiff, source_rows, target_rows)
         let mut table_diffs = Vec::with_capacity(handles.len());
+        let mut all_source_rows: Vec<RowMap> = Vec::new();
+        let mut all_target_rows: Vec<RowMap> = Vec::new();
+
         for h in handles {
-            table_diffs.push(h.await??);
+            let (diff, src_rows, tgt_rows) = h.await??;
+            all_source_rows.extend(src_rows);
+            all_target_rows.extend(tgt_rows);
+            table_diffs.push(diff);
         }
 
-        Ok(Changeset::new(
-            &source_schema.0,
-            &target_schema.0,
-            driver,
-            table_diffs,
-        ))
+        // Compute cross-table fingerprints so the orchestrator can store them
+        // at deploy time and detect concurrent target changes on future runs.
+        let source_fp = fingerprint(&all_source_rows);
+        let target_fp = fingerprint(&all_target_rows);
+
+        let mut changeset = Changeset::new(&source_schema.0, &target_schema.0, driver, table_diffs);
+        changeset.source_fingerprint = source_fp.0;
+        changeset.target_fingerprint = target_fp.0;
+
+        Ok(changeset)
     }
 }
 
