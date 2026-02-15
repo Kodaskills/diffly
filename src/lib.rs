@@ -43,7 +43,7 @@ pub fn init_tracing(level: LogLevel) {
 
     let default_filter = match level {
         LogLevel::Error => "diffly=error",
-        LogLevel::Info  => "diffly=info",
+        LogLevel::Info => "diffly=info",
         LogLevel::Debug => "diffly=debug",
     };
 
