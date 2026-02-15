@@ -64,12 +64,7 @@ struct JsonDelete<'a> {
 
 // ─── SQL generation helpers ───────────────────────────────────────────────────
 
-fn insert_sql(
-    schema: &str,
-    table: &str,
-    row: &RowChange,
-    dialect: &dyn QueryDialect,
-) -> String {
+fn insert_sql(schema: &str, table: &str, row: &RowChange, dialect: &dyn QueryDialect) -> String {
     let (cols, vals) = insert_columns_values(&row.data, dialect);
     let mut s = String::new();
     let _ = write!(
@@ -83,12 +78,7 @@ fn insert_sql(
     s
 }
 
-fn update_sql(
-    schema: &str,
-    table: &str,
-    row: &RowUpdate,
-    dialect: &dyn QueryDialect,
-) -> String {
+fn update_sql(schema: &str, table: &str, row: &RowUpdate, dialect: &dyn QueryDialect) -> String {
     let mut s = String::new();
     let _ = write!(
         s,
@@ -101,12 +91,7 @@ fn update_sql(
     s
 }
 
-fn delete_sql(
-    schema: &str,
-    table: &str,
-    row: &RowChange,
-    dialect: &dyn QueryDialect,
-) -> String {
+fn delete_sql(schema: &str, table: &str, row: &RowChange, dialect: &dyn QueryDialect) -> String {
     let mut s = String::new();
     let _ = write!(
         s,
@@ -202,7 +187,11 @@ mod tests {
     fn make_changeset() -> Changeset {
         let insert = RowChange {
             pk: [("id".to_string(), json!(1))].into(),
-            data: [("id".to_string(), json!(1)), ("rate".to_string(), json!(0.10))].into(),
+            data: [
+                ("id".to_string(), json!(1)),
+                ("rate".to_string(), json!(0.10)),
+            ]
+            .into(),
         };
         let update = RowUpdate {
             pk: [("id".to_string(), json!(2))].into(),
@@ -216,7 +205,11 @@ mod tests {
         };
         let delete = RowChange {
             pk: [("id".to_string(), json!(3))].into(),
-            data: [("id".to_string(), json!(3)), ("rate".to_string(), json!(0.30))].into(),
+            data: [
+                ("id".to_string(), json!(3)),
+                ("rate".to_string(), json!(0.30)),
+            ]
+            .into(),
         };
 
         let table = TableDiff {
@@ -259,6 +252,9 @@ mod tests {
         let parsed: Value = serde_json::from_str(&output).unwrap();
         let insert_sql = parsed["tables"][0]["inserts"][0]["sql"].as_str().unwrap();
         // MySQL uses backticks
-        assert!(insert_sql.contains('`'), "expected backticks, got: {insert_sql}");
+        assert!(
+            insert_sql.contains('`'),
+            "expected backticks, got: {insert_sql}"
+        );
     }
 }

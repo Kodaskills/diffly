@@ -91,7 +91,10 @@ impl RowRepository for MonitoringRowRepository {
         excluded: &ExcludedColumns,
     ) -> Result<Vec<RowMap>> {
         let start = Instant::now();
-        let rows = self.inner.fetch_rows(schema, table, pk_cols, excluded).await?;
+        let rows = self
+            .inner
+            .fetch_rows(schema, table, pk_cols, excluded)
+            .await?;
         let duration_ms = start.elapsed().as_millis();
 
         info!(table = %table.0, rows = rows.len(), duration_ms, "fetch_rows completed");
