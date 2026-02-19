@@ -96,13 +96,26 @@ push-tag:
     version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
     git push origin "v${version}"
 
-# Delete the current Cargo.toml version tag locally and on origin
+# Delete the current Cargo.toml version tag. Pass "true" to also delete on origin.
+# Usage: just tag-remove        # local only
+
+# just tag-remove true   # local + origin
 [group('release')]
-tag-remove:
+tag-remove remote="false":
     #!/usr/bin/env bash
     version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
-    git tag -d "v${version}"
-    # git push origin --delete "v${version}"
+    if git tag -d "v${version}" 2>/dev/null; then
+        echo "Local tag v${version} deleted."
+    else
+        echo "Local tag v${version} not found, skipping."
+    fi || true
+    if [ "{{ remote }}" = "true" ]; then
+        if git push origin --delete "v${version}"; then
+            echo "Remote tag v${version} deleted."
+        else
+            echo "Remote tag v${version} not found or already deleted."
+        fi
+    fi
 
 # Tag locally and push in one step
 [group('release')]

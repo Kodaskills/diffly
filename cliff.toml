@@ -8,7 +8,7 @@ body = """
 {% for commit in commits %}\
   - {{ commit.message | upper_first }}\
   {% if commit.breaking %} ⚠️ BREAKING{% endif %} \
-  ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/kodaskills/diffly/commit/{{ commit.id }}))\
+  ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/kodaskills/diffly/commit/{{ commit.id }}))
 {% endfor %}
 {% endfor %}
 """

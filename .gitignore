@@ -119,3 +119,8 @@ $RECYCLE.BIN/
 
 output/
 doc/
+
+# GoReleaser artifacts (generated at release time, never committed)
+dist/
+release-notes.md
+artifacts/
