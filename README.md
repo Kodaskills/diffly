@@ -185,7 +185,7 @@ flowchart LR
 
 ## 🌿 Dialects
 
-Today, **Diffly** is implements these dialects:
+Today, **Diffly** implements these dialects:
 
 - <img src="https://www.vectorlogo.zone/logos/postgresql/postgresql-icon.svg"  alt="Postgresql"  width="20"  height="20"> Postgresql
 - <img src="https://www.vectorlogo.zone/logos/mysql/mysql-icon.svg"  alt="Mysql"  width="20"  height="20"> Mysql
@@ -202,8 +202,8 @@ Please feel free to fix or add new dialect by forking this repository and use a 
 # Start PostgreSQL + fixtures import + diff execution
 docker compose -f examples/postgresql/docker-compose.yml up --build
 
-# Results are exported into the ./output/ root directory
-ls ./output/
+# Results are exported into the ./output/ root directory configurable inside the config.toml
+ls ./output/postgresql/cs_20260211_***/
 #  cs_20260211_*.json   ← Strucutred changeset
 #  cs_20260211_*.sql    ← Atomic migration SQL (BEGIN/COMMIT)
 #  cs_20260211_*.html   ← Visual report (open in a browser)
