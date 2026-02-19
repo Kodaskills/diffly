@@ -4,9 +4,17 @@ on:
   push:
     branches:
       - "**"
-    tags-ignore:
-      - "diffly-*"
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/lint.yml"
   pull_request:
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/lint.yml"
 
 jobs:
   clippy:

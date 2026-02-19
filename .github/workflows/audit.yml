@@ -2,12 +2,11 @@ name: Security audit
 
 on:
   push:
+    branches:
+      - "**"
     paths:
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
-    tags-ignore:
-      - "diffly-*"
-      - "*"
+      - "Cargo.toml"
+      - "Cargo.lock"
   # schedule:
   #   - cron: "0 0 * * *"
 
