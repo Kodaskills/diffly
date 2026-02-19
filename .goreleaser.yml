@@ -1,22 +1,20 @@
 version: 2
 
-# Binaries are cross-compiled by the release workflow using
-# houseabsolute/actions-rust-cross and placed at the exact paths
-# GoReleaser's rust builder would have produced:
-#   dist/diffly_<rust-triple>/diffly[.exe]
-# GoReleaser skips the build step and only packages + publishes.
-
 project_name: diffly
 
 builds:
   - id: diffly
     builder: rust
+    tool: cross
+    command: build
     binary: diffly
-    skip: true
+    flags:
+      - --release
+      - --locked
+      - --features=cli
     targets:
       - x86_64-unknown-linux-musl
       - aarch64-unknown-linux-musl
-      - arm-unknown-linux-musleabi
       - x86_64-apple-darwin
       - aarch64-apple-darwin
       - x86_64-pc-windows-msvc
@@ -29,12 +27,11 @@ archives:
     format_overrides:
       - goos: windows
         formats: ["zip"]
-    name_template: "diffly_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "diffly_{{ .Version }}_{{ .Target }}"
     files:
       - README.md
       - LICENSE-MIT
       - LICENSE-APACHE
-      - CHANGELOG.md
 
 checksum:
   name_template: "diffly_{{ .Version }}_checksums.txt"
