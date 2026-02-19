@@ -11,7 +11,7 @@ documentation = "https://docs.rs/diffly"
 homepage = "https://github.com/kodaskills/diffly"
 repository = "https://github.com/kodaskills/diffly"
 readme = "README.md"
-keywords = ["diff", "database", "sql", "postgresql", "mysql", "mariadb", "sqlite", "migration", "cli", "table", "json", "rust"]
+keywords = ["diff", "database", "sql", "migration", "cli"]
 categories = ["command-line-utilities", "database", "development-tools","development-tools::testing"]
 include = [
     "src/**/*.rs",

@@ -11,9 +11,78 @@ env:
   CROSS_VERSION: 107433fa9d71d7eb506cd5bf5467bab89edb7a52
 
 jobs:
-  # ─── GoReleaser: build all targets + publish GitHub release ──────────────────
-  goreleaser:
-    name: GoReleaser
+  # ─── Build binaries (matrix) ──────────────────────────────────────────────────
+  build:
+    name: Build ${{ matrix.platform.os-name }}
+    runs-on: ${{ matrix.platform.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+            binary: diffly
+
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-24.04
+            target: aarch64-unknown-linux-musl
+            binary: diffly
+
+          - os-name: macOS-x86_64
+            runs-on: macos-latest
+            target: x86_64-apple-darwin
+            binary: diffly
+
+          - os-name: macOS-aarch64
+            runs-on: macos-latest
+            target: aarch64-apple-darwin
+            binary: diffly
+
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: diffly.exe
+
+          - os-name: FreeBSD-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-freebsd
+            binary: diffly
+
+          - os-name: NetBSD-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-netbsd
+            binary: diffly
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.platform.target }}
+
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: ${{ matrix.platform.target }}
+          toolchain: stable
+          args: "--locked --release --features cli"
+          strip: true
+          cross-version: ${{ env.CROSS_VERSION }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.platform.target }}
+          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.binary }}
+          retention-days: 1
+
+  # ─── Package + GitHub release ─────────────────────────────────────────────────
+  release:
+    name: GitHub Release
+    needs: build
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -22,24 +91,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cross binary
-        id: cache-cross
-        uses: actions/cache@v4
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.cargo/bin/cross
-          key: cross-${{ env.CROSS_VERSION }}
+          pattern: binary-*
+          path: artifacts/
+          merge-multiple: false
 
-      - name: Install cross (pinned, from source)
-        if: steps.cache-cross.outputs.cache-hit != 'true'
-        run: cargo install cross --git https://github.com/cross-rs/cross --rev ${{ env.CROSS_VERSION }} --locked
-
-      - name: Cache cargo & target directories
-        uses: Swatinem/rust-cache@v2
-
-      # release-notes.md is in .gitignore → does not dirty the git state.
       - name: Generate release notes
         uses: orhun/git-cliff-action@v4
         with:
@@ -49,17 +107,45 @@ jobs:
           OUTPUT: release-notes.md
           GITHUB_REPO: ${{ github.repository }}
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+      - name: Package archives
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/
+
+          package() {
+            local target="$1"
+            local binary="$2"
+            local archive="dist/diffly_${version}_${target}"
+            local src="artifacts/binary-${target}/${binary}"
+
+            if [[ "$target" == *"windows"* ]]; then
+              zip "${archive}.zip" "$src" README.md LICENSE-MIT LICENSE-APACHE
+            else
+              tar czf "${archive}.tar.gz" "$src" README.md LICENSE-MIT LICENSE-APACHE
+            fi
+          }
+
+          package x86_64-unknown-linux-musl   diffly
+          package aarch64-unknown-linux-musl   diffly
+          package x86_64-apple-darwin          diffly
+          package aarch64-apple-darwin         diffly
+          package x86_64-pc-windows-msvc       diffly.exe
+          package x86_64-unknown-freebsd       diffly
+          package x86_64-unknown-netbsd        diffly
+
+          sha256sum dist/* > dist/diffly_${version}_checksums.txt
+          echo "=== dist/ ===" && ls -lh dist/
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
         with:
-          distribution: goreleaser
-          version: "~> v2"
-          args: release --clean --release-notes=release-notes.md
+          body_path: release-notes.md
+          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # CHANGELOG.md is generated and committed only after a successful release.
-      # The tag stays pointing at your actual release commit.
+      # Commit CHANGELOG.md to main only after a successful release.
       - name: Generate CHANGELOG.md
         uses: orhun/git-cliff-action@v4
         with:
@@ -89,7 +175,7 @@ jobs:
   # ─── Publish to crates.io ────────────────────────────────────────────────────
   publish-crates:
     name: Publish to crates.io
-    needs: goreleaser
+    needs: release
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
