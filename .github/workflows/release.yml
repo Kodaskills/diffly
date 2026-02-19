@@ -31,12 +31,26 @@ jobs:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
 
-      - name: Commit CHANGELOG.md
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "📝 chore(changelog): update CHANGELOG.md for ${{ github.ref_name }}"
-          file_pattern: CHANGELOG.md
-          tagging_message: ${{ github.ref_name }}
+      # On a tag push, git checks out in detached HEAD — no branch to push to.
+      # We commit directly on the detached HEAD, force-move the tag, then push
+      # the tag (not a branch) so the release points at the changelog commit.
+      - name: Commit and retag CHANGELOG.md
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add CHANGELOG.md
+
+          if git diff --cached --quiet; then
+            echo "CHANGELOG.md unchanged — nothing to commit."
+            exit 0
+          fi
+
+          git commit -m "📝 chore(changelog): update CHANGELOG.md for ${{ github.ref_name }}"
+
+          # Force-move the tag to include this commit, then push it.
+          git tag -f "${{ github.ref_name }}"
+          git push origin -f "refs/tags/${{ github.ref_name }}"
 
   # ─── Build all binaries ───────────────────────────────────────────────────────
   build:
