@@ -31,26 +31,24 @@ jobs:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
 
-      # On a tag push, git checks out in detached HEAD — no branch to push to.
-      # We commit directly on the detached HEAD, force-move the tag, then push
-      # the tag (not a branch) so the release points at the changelog commit.
-      - name: Commit and retag CHANGELOG.md
+      # Commit CHANGELOG.md back to the default branch — not onto the tag.
+      # The tag stays pointing at your actual release commit.
+      - name: Commit CHANGELOG.md to main
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add CHANGELOG.md
+          git fetch origin main
+          git checkout main
 
-          if git diff --cached --quiet; then
+          if git diff --quiet CHANGELOG.md; then
             echo "CHANGELOG.md unchanged — nothing to commit."
             exit 0
           fi
 
+          git add CHANGELOG.md
           git commit -m "📝 chore(changelog): update CHANGELOG.md for ${{ github.ref_name }}"
-
-          # Force-move the tag to include this commit, then push it.
-          git tag -f "${{ github.ref_name }}"
-          git push origin -f "refs/tags/${{ github.ref_name }}"
+          git push origin main
 
   # ─── Build all binaries ───────────────────────────────────────────────────────
   build:
@@ -103,8 +101,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
 
       - name: Cache cargo & target directories
         uses: Swatinem/rust-cache@v2
@@ -139,10 +135,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.ref_name }}
 
-      # Download into artifacts/ — GoReleaser's --clean wipes dist/ at startup,
-      # so binaries must land outside dist/ first, then be moved in.
       - name: Download all binary artifacts
         uses: actions/download-artifact@v4
         with:
@@ -150,17 +143,17 @@ jobs:
           path: artifacts/
           merge-multiple: false
 
-      # Flatten artifacts/<target>/binary → dist/<target>/diffly[.exe]
-      # This runs after checkout but before GoReleaser, which will clean dist/.
-      # We let GoReleaser clean dist/ and then immediately repopulate it.
+      # GoReleaser rust builder places binaries at dist/diffly_<rust-triple>/diffly[.exe].
+      # Reproduce that exact layout from the downloaded artifacts.
       - name: Arrange dist/ layout
         shell: bash
         run: |
           for dir in artifacts/binary-*/; do
             target="${dir#artifacts/binary-}"
             target="${target%/}"
-            mkdir -p "dist/${target}"
-            mv "$dir"/* "dist/${target}/"
+            dest="dist/diffly_${target}"
+            mkdir -p "$dest"
+            mv "$dir"/* "$dest/"
           done
           echo "=== dist/ layout ==="
           find dist/ -type f | sort
@@ -180,9 +173,8 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          # --skip=validate: skips dirty tree check (CHANGELOG.md was just committed)
-          # --release-notes: uses git-cliff output as the GitHub release body
-          args: release --release-notes=release-notes.md --skip=validate
+          # No --clean: dist/ was just populated with pre-built binaries.
+          args: release --release-notes=release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

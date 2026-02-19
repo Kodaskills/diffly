@@ -79,13 +79,14 @@ changelog-unreleased:
 
 # ─── Release ──────────────────────────────────────────────────────────────────
 
-# Tag locally using the version from Cargo.toml
+# Tag locally using the version from Cargo.toml, with unreleased changelog as annotation
 [group('release')]
 tag:
     #!/usr/bin/env bash
     version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+    notes=$(git-cliff --config cliff.toml --unreleased --strip all 2>/dev/null)
     echo "Tagging v${version}…"
-    git tag -a "v${version}" -m "Release v${version}"
+    git tag -a "v${version}" -m "Release v${version}" -m "${notes}"
     echo "Done. Run 'just push-tag' to trigger the release workflow."
 
 # Push the current Cargo.toml version tag to origin — triggers the release workflow
