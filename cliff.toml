@@ -1,0 +1,49 @@
+[changelog]
+header = ""
+body = """
+## {{ version | default(value="Unreleased") }}{% if timestamp %} — {{ timestamp | date(format="%Y-%m-%d") }}{% endif %}
+
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}\
+  - {{ commit.message | upper_first }}\
+  {% if commit.breaking %} ⚠️ BREAKING{% endif %} \
+  ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/kodaskills/diffly/commit/{{ commit.id }}))\
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+footer = ""
+postprocessors = [
+  # Strip leading gitmoji (emoji + optional space) from commit messages.
+  { pattern = '^[^\x00-\x7F]+\s*', replace = "" },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = true
+commit_preprocessors = [
+  # Normalize: strip gitmoji prefix before parsing the conventional commit type.
+  { pattern = '^[^\x00-\x7F]+\s*', replace = "" },
+  # Rejoin wrapped subject lines: a newline followed immediately by a word
+  # (no blank line) means git wrapped a long subject — collapse it back.
+  { pattern = '\n([^\n])', replace = " $1" },
+]
+commit_parsers = [
+  { message = "^feat", group = "✨ Features" },
+  { message = "^fix", group = "🐛 Bug Fixes" },
+  { message = "^perf", group = "⚡ Performance" },
+  { message = "^refactor", group = "♻️ Refactor" },
+  { message = "^docs", group = "📝 Documentation" },
+  { message = "^test", group = "🧪 Tests" },
+  { message = "^chore\\(ci\\)|^ci", group = "👷 CI" },
+  { message = "^chore", skip = true },
+  { message = "^style", skip = true },
+]
+filter_commits = true
+tag_pattern = "v[0-9].*"
+skip_tags = ""
+ignore_tags = ""
+topo_order = false
+sort_commits = "oldest"

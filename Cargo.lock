@@ -3,28 +3,6 @@
 version = 4
 
 [[package]]
-name = "Diffly"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "clap",
- "colored",
- "sailfish",
- "serde",
- "serde_json",
- "sha2",
- "sqlx",
- "tabled",
- "tokio",
- "toml 1.0.0+spec-1.1.0",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "aho-corasick"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -374,6 +352,28 @@ dependencies = [
  "const-oid",
  "pem-rfc7468",
  "zeroize",
+]
+
+[[package]]
+name = "diffly"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clap",
+ "colored",
+ "sailfish",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sqlx",
+ "tabled",
+ "tokio",
+ "toml 1.0.0+spec-1.1.0",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

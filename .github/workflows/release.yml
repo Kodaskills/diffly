@@ -1,0 +1,190 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  RUST_BACKTRACE: 1
+  CROSS_VERSION: 107433fa9d71d7eb506cd5bf5467bab89edb7a52
+
+jobs:
+  # ─── Generate and commit CHANGELOG.md ────────────────────────────────────────
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate CHANGELOG.md
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Commit CHANGELOG.md
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "📝 chore(changelog): update CHANGELOG.md for ${{ github.ref_name }}"
+          file_pattern: CHANGELOG.md
+          tagging_message: ${{ github.ref_name }}
+
+  # ─── Build all binaries ───────────────────────────────────────────────────────
+  build:
+    name: Build ${{ matrix.platform.os-name }}
+    needs: changelog
+    runs-on: ${{ matrix.platform.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+            binary: diffly
+
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-24.04
+            target: aarch64-unknown-linux-musl
+            binary: diffly
+
+          - os-name: Linux-arm
+            runs-on: ubuntu-24.04
+            target: arm-unknown-linux-musleabi
+            binary: diffly
+
+          - os-name: macOS-x86_64
+            runs-on: macos-latest
+            target: x86_64-apple-darwin
+            binary: diffly
+
+          - os-name: macOS-aarch64
+            runs-on: macos-latest
+            target: aarch64-apple-darwin
+            binary: diffly
+
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: diffly.exe
+
+          - os-name: FreeBSD-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-freebsd
+            binary: diffly
+
+          - os-name: NetBSD-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-netbsd
+            binary: diffly
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.platform.target }}
+
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: ${{ matrix.platform.target }}
+          toolchain: stable
+          args: "--locked --release --features cli"
+          strip: true
+          cross-version: ${{ env.CROSS_VERSION }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.platform.target }}
+          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.binary }}
+          retention-days: 1
+
+  # ─── GoReleaser: package + publish GitHub release ────────────────────────────
+  goreleaser:
+    name: GoReleaser
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      # Download into artifacts/ — GoReleaser's --clean wipes dist/ at startup,
+      # so binaries must land outside dist/ first, then be moved in.
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          path: artifacts/
+          merge-multiple: false
+
+      # Flatten artifacts/<target>/binary → dist/<target>/diffly[.exe]
+      # This runs after checkout but before GoReleaser, which will clean dist/.
+      # We let GoReleaser clean dist/ and then immediately repopulate it.
+      - name: Arrange dist/ layout
+        shell: bash
+        run: |
+          for dir in artifacts/binary-*/; do
+            target="${dir#artifacts/binary-}"
+            target="${target%/}"
+            mkdir -p "dist/${target}"
+            mv "$dir"/* "dist/${target}/"
+          done
+          echo "=== dist/ layout ==="
+          find dist/ -type f | sort
+
+      # Generate release notes for this tag only (stripped of headers/footers).
+      - name: Generate release notes
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose --latest --strip all
+        env:
+          OUTPUT: release-notes.md
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          # --skip=validate: skips dirty tree check (CHANGELOG.md was just committed)
+          # --release-notes: uses git-cliff output as the GitHub release body
+          args: release --release-notes=release-notes.md --skip=validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─── Publish to crates.io ────────────────────────────────────────────────────
+  publish-crates:
+    name: Publish to crates.io
+    needs: goreleaser
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Publish lib crate
+        run: cargo publish --no-default-features --token "${{ secrets.CARGO_REGISTRY_TOKEN }}"

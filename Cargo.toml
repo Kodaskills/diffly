@@ -1,10 +1,10 @@
 [package]
-name = "Diffly"
+name = "diffly"
 version = "0.1.0"
 rust-version = "1.70.0"
 edition = "2021"
 description = "Quickly compare your SQL data with clarity and style."
-publish = false
+publish = true
 authors = ["Yudao <opensource@kodaskills.co>"]
 license = "MIT"
 documentation = "https://docs.rs/diffly"

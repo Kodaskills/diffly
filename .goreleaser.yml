@@ -1,0 +1,76 @@
+version: 2
+
+# GoReleaser runs in prebuilt mode — binaries are cross-compiled by the
+# release workflow using houseabsolute/actions-rust-cross and deposited
+# into dist/<rust-target>/ before GoReleaser runs.
+# GoReleaser only packages, checksums, and publishes the GitHub release.
+
+project_name: diffly
+
+builds:
+  - builder: prebuilt
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - netbsd
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: arm
+      - goos: freebsd
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm
+      - goos: netbsd
+        goarch: arm64
+      - goos: netbsd
+        goarch: arm
+    prebuilt:
+      # Must match the layout produced by the "Arrange dist/ layout" step
+      # in release.yml: dist/<rust-target>/diffly[.exe]
+      path: >-
+        dist/{{- if and (eq .Os "linux") (eq .Arch "amd64") }}x86_64-unknown-linux-musl
+        {{- else if and (eq .Os "linux") (eq .Arch "arm64") }}aarch64-unknown-linux-musl
+        {{- else if and (eq .Os "linux") (eq .Arch "arm") }}arm-unknown-linux-musleabi
+        {{- else if and (eq .Os "darwin") (eq .Arch "amd64") }}x86_64-apple-darwin
+        {{- else if and (eq .Os "darwin") (eq .Arch "arm64") }}aarch64-apple-darwin
+        {{- else if and (eq .Os "windows") (eq .Arch "amd64") }}x86_64-pc-windows-msvc
+        {{- else if and (eq .Os "freebsd") (eq .Arch "amd64") }}x86_64-unknown-freebsd
+        {{- else if and (eq .Os "netbsd") (eq .Arch "amd64") }}x86_64-unknown-netbsd
+        {{- end }}/diffly{{ if eq .Os "windows" }}.exe{{ end }}
+    binary: diffly
+
+archives:
+  - id: default
+    formats: ["tar.gz"]
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+    name_template: "diffly_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE-MIT
+      - LICENSE-APACHE
+      - CHANGELOG.md
+
+checksum:
+  name_template: "diffly_{{ .Version }}_checksums.txt"
+
+release:
+  github:
+    owner: kodaskills
+    name: diffly
+  draft: false
+  prerelease: auto
+
+changelog:
+  disable: true
