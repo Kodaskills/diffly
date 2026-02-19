@@ -196,53 +196,56 @@ Please feel free to fix or add new dialect by forking this repository and use a 
 
 ## ⚡ Quick Start
 
-### 🐳 Run all once as cli for a diff in Docker
+### 🐳 Run examples in Docker
+
+Each dialect has a self-contained example that spins up the database, imports fixtures, runs diffly, and tears everything down:
 
 ```bash
-# Start PostgreSQL + fixtures import + diff execution
-docker compose -f examples/postgresql/docker-compose.yml up --build
-
-# Results are exported into the ./output/ root directory configurable inside the config.toml
-ls ./output/postgresql/cs_20260211_***/
-#  cs_20260211_*.json   ← Strucutred changeset
-#  cs_20260211_*.sql    ← Atomic migration SQL (BEGIN/COMMIT)
-#  cs_20260211_*.html   ← Visual report (open in a browser)
-
-# To reset
-docker compose -f examples/postgresql/docker-compose.yml down -v
+just example-pg       # PostgreSQL
+just example-mysql    # MySQL
+just example-mariadb  # MariaDB
+just example-sqlite   # SQLite
+just example-all      # all four sequentially
 ```
 
-### 📍 Run as cli in local (with cargo)
+Results are written to `./output/<driver>/` (configurable in each example's `config.toml`):
+
+```
+output/postgresql/cs_20260211_***/
+  *.json   ← Structured changeset
+  *.sql    ← Atomic migration SQL (BEGIN/COMMIT)
+  *.html   ← Visual report (open in a browser)
+```
+
+### 📍 Run locally (with cargo)
 
 ```bash
-# 1. Run PostgreSQL alone if you do not have a local base (optional)
+# 1. Start only the database (optional — skip if you have your own)
 docker compose -f examples/postgresql/docker-compose.yml up postgres -d
 
-# 2. Copy and paste postgresql config example and change the settings you need
-# For example as is you must change host of 2 the sources to localhost (or your own)
+# 2. Copy the example config and adjust host / credentials
 cp ./examples/postgresql/config.toml ./my-config.toml
 
-# 3. Build + run
-cargo run --features cli -- --config ./my-config diff
+# 3. Run
+just build && ./target/debug/diffly --config ./my-config.toml diff
 
-# 4. Dry run (cli summary only, pas de fichiers)
-cargo run --features cli -- --config ./my-config --dry-run diff
+# Dry run — summary only, no files written
+./target/debug/diffly --config ./my-config.toml diff --dry-run
 
-# 5. Only one format (json, html, sql)
-cargo run --features cli -- --config ./my-config --format html diff 
+# Single format
+./target/debug/diffly --config ./my-config.toml diff --format html
 ```
 
 ### 📚 Run as library
 
 ```bash
-# 1. Run PostgreSQL alone if you do not have a local base (optional)
+# 1. Start only the database (optional)
 docker compose -f examples/postgresql/docker-compose.yml up postgres -d
 
-# 2. Copy and paste postgresql config example and change the settings you need
-# For example as is you must change host of 2 the sources to localhost (or your own)
+# 2. Copy and adjust the config
 cp ./examples/postgresql/config.toml ./my-config.toml
 
-# 3. Run
+# 3. Run the library example
 cargo run --example diff_as_lib -- ./my-config.toml
 ```
 

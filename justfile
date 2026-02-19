@@ -31,6 +31,40 @@ lint:
 fmt:
     cargo fmt
 
+# ─── Examples (Docker) ────────────────────────────────────────────────────────
+
+# Run the PostgreSQL example (build + diff + teardown)
+[group('examples')]
+example-pg:
+    docker compose -f examples/postgresql/docker-compose.yml up --build
+    docker compose -f examples/postgresql/docker-compose.yml down -v
+
+# Run the MySQL example
+[group('examples')]
+example-mysql:
+    docker compose -f examples/mysql/docker-compose.yml up --build
+    docker compose -f examples/mysql/docker-compose.yml down -v
+
+# Run the MariaDB example
+[group('examples')]
+example-mariadb:
+    docker compose -f examples/mariadb/docker-compose.yml up --build
+    docker compose -f examples/mariadb/docker-compose.yml down -v
+
+# Run the SQLite example
+[group('examples')]
+example-sqlite:
+    docker compose -f examples/sqlite/docker-compose.yml up --build
+    docker compose -f examples/sqlite/docker-compose.yml down -v
+
+# Run all examples sequentially
+[group('examples')]
+example-all:
+    just example-pg
+    just example-mysql
+    just example-mariadb
+    just example-sqlite
+
 # ─── Changelog ────────────────────────────────────────────────────────────────
 
 # Preview the full changelog (requires: cargo install git-cliff)
@@ -45,9 +79,31 @@ changelog-unreleased:
 
 # ─── Release ──────────────────────────────────────────────────────────────────
 
-# Tag and push a release — triggers the release workflow
+# Tag locally using the version from Cargo.toml
 [group('release')]
-release version:
-    @echo "Tagging v{{ version }}…"
-    git tag -a "v{{ version }}" -m "Release v{{ version }}"
-    git push origin "v{{ version }}"
+tag:
+    #!/usr/bin/env bash
+    version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+    echo "Tagging v${version}…"
+    git tag -a "v${version}" -m "Release v${version}"
+    echo "Done. Run 'just push-tag' to trigger the release workflow."
+
+# Push the current Cargo.toml version tag to origin — triggers the release workflow
+[group('release')]
+push-tag:
+    #!/usr/bin/env bash
+    version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+    git push origin "v${version}"
+
+# Delete the current Cargo.toml version tag locally and on origin
+[group('release')]
+tag-remove:
+    #!/usr/bin/env bash
+    version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+    git tag -d "v${version}"
+    # git push origin --delete "v${version}"
+
+# Tag locally and push in one step
+[group('release')]
+release:
+    just tag && just push-tag
