@@ -1,20 +1,24 @@
+<% let pk_cols = &table.primary_key; %>
+<% let non_pk_cols: Vec<&String> = rows[0].data.keys().filter(|k| !pk_cols.contains(k)).collect(); %>
+<% let pk_present: Vec<&String> = pk_cols.iter().filter(|k| rows[0].data.contains_key(*k)).collect(); %>
+<% let all_cols: Vec<&String> = pk_present.iter().copied().chain(non_pk_cols.iter().copied()).collect(); %>
 <div class="change-group change-group--<%= if group_name == "Inserts" { "insert" } else { "delete" } %>">
   <h3><%= group_name %></h3>
   <table>
     <% if !rows.is_empty() { %>
     <thead>
       <tr>
-        <% for col in rows[0].data.keys() { %>
-          <th class="<%= if table.primary_key.contains(col) { "pk-cell" } else { "" } %>" onclick="sortTable(this)"><%= col %></th>
+        <% for col in &all_cols { %>
+          <th class="<%= if pk_cols.contains(col) { "pk-cell" } else { "" } %>" onclick="sortTable(this)"><%= col %></th>
         <% } %>
       </tr>
     </thead>
     <tbody>
       <% for row in rows { %>
         <tr class="op-<%= if group_name == "Inserts" { "insert" } else { "delete" } %>">
-          <% for col_name in rows[0].data.keys() { %>
-            <% let v = row.data.get(col_name).unwrap_or(&serde_json::Value::Null); %>
-            <td class="<%= if table.primary_key.contains(col_name) { "pk-cell" } else if group_name == "Inserts" { "val-after" } else { "val-before" } %>">
+          <% for col_name in &all_cols { %>
+            <% let v = row.data.get(*col_name).unwrap_or(&serde_json::Value::Null); %>
+            <td class="<%= if pk_cols.contains(col_name) { "pk-cell" } else if group_name == "Inserts" { "val-after" } else { "val-before" } %>">
               <%= v.to_string() %>
             </td>
           <% } %>
