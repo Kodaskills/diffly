@@ -1,4 +1,20 @@
 
+## v0.2.0 — 2026-02-20
+
+
+### ✨ Features
+- Add viper-style layered configuration loading ([f3da724](https://github.com/kodaskills/diffly/commit/f3da7240749f9a879c9ba8f1f1f7a1b497f606a9))
+- Embed PerfReport in JSON and HTML outputs ([0c3fa47](https://github.com/kodaskills/diffly/commit/0c3fa475f92e3eb7d2515e27e12ba17197c562b0))
+
+
+### 🐛 Bug Fixes
+- Percent-encode a string for safe use in a connection URL ([6663d90](https://github.com/kodaskills/diffly/commit/6663d90565b35691002aabe926589e350bd477c0))
+- Render PK columns first in declared order for all change groups ([a929c07](https://github.com/kodaskills/diffly/commit/a929c07f0bef308e3aeb29e9a438bd16eccdc32a))
+
+
+### 👷 CI
+- Default diff.tables to [] so env-only configs pass on CI ([6959ee3](https://github.com/kodaskills/diffly/commit/6959ee34d9ab965a122c563526b8fcfd09b73538))
+
 ## v0.1.0 — 2026-02-19
 
 
