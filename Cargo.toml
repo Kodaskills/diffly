@@ -59,7 +59,11 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
 colored = { version = "2", optional = true }
 tabled = { version = "0.17", features = ["derive", "ansi"], optional = true  }
-toml = "1.0.0"
+config = { version = "0.15", default-features = false, features = ["toml", "convert-case"] }
+dirs = "5"
 async-trait = "0.1.89"
 sha2 = "0.10"
 sailfish = "0.10.1"
+
+[dev-dependencies]
+tempfile = "3"
