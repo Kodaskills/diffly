@@ -48,17 +48,40 @@ pub struct OutputConfig {
 }
 
 impl DbConfig {
+    /// Percent-encode a string for safe use in a connection URL.
+    fn encode(s: &str) -> String {
+        let mut encoded = String::with_capacity(s.len());
+        for c in s.chars() {
+            match c {
+                // Unreserved characters — safe as-is
+                'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => encoded.push(c),
+                // Everything else gets percent-encoded
+                c => {
+                    let mut buf = [0u8; 4];
+                    let bytes = c.encode_utf8(&mut buf);
+                    for byte in bytes.bytes() {
+                        encoded.push('%');
+                        encoded.push_str(&format!("{:02X}", byte));
+                    }
+                }
+            }
+        }
+        encoded
+    }
+
     /// Build a sqlx-compatible connection URL from this config.
     pub fn url(&self) -> String {
+        let user = Self::encode(&self.user);
+        let password = Self::encode(&self.password);
         match self.driver.as_str() {
             "mysql" | "mariadb" => format!(
                 "mysql://{}:{}@{}:{}/{}",
-                self.user, self.password, self.host, self.port, self.dbname
+                user, password, self.host, self.port, self.dbname
             ),
             "sqlite" => format!("sqlite://{}", self.dbname),
             _ => format!(
                 "postgres://{}:{}@{}:{}/{}",
-                self.user, self.password, self.host, self.port, self.dbname
+                user, password, self.host, self.port, self.dbname
             ),
         }
     }
