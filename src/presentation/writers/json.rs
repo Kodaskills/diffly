@@ -4,6 +4,7 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use std::fmt::Write as FmtWrite;
 
+use crate::application::monitoring::PerfReport;
 use crate::domain::{
     changeset::{Changeset, Summary},
     ports::OutputWriter,
@@ -28,6 +29,8 @@ struct JsonChangeset<'a> {
     target_fingerprint: &'a str,
     tables: Vec<JsonTableDiff<'a>>,
     summary: &'a Summary,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    perf: Option<&'a PerfReport>,
 }
 
 #[derive(Serialize)]
@@ -167,6 +170,7 @@ impl OutputWriter for JsonWriter {
                 .map(|t| build_table_diff(t, &cs.target_schema, dialect.as_ref()))
                 .collect(),
             summary: &cs.summary,
+            perf: cs.perf.as_ref(),
         };
 
         Ok(serde_json::to_string_pretty(&view)?)

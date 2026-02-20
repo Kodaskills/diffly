@@ -1,3 +1,4 @@
+use crate::application::monitoring::PerfReport;
 use crate::domain::table_diff::TableDiff;
 use chrono::Utc;
 use serde::Serialize;
@@ -17,6 +18,10 @@ pub struct Changeset {
     pub target_fingerprint: String,
     pub tables: Vec<TableDiff>,
     pub summary: Summary,
+    /// Optional performance report embedded at diff time.
+    /// Present in JSON and HTML outputs when `run_with_timing` is used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub perf: Option<PerfReport>,
 }
 
 #[allow(dead_code)] // invoked by serde(default), not called directly
@@ -65,6 +70,15 @@ impl Changeset {
                 total_changes: total_inserts + total_updates + total_deletes,
                 tables_affected,
             },
+            perf: None,
         }
+    }
+
+    /// Attach a [`PerfReport`] to this changeset (builder pattern).
+    ///
+    /// The report will be included in JSON and HTML outputs.
+    pub fn with_perf(mut self, perf: PerfReport) -> Self {
+        self.perf = Some(perf);
+        self
     }
 }

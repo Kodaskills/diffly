@@ -117,6 +117,8 @@ pub async fn run_with_timing(cfg: &AppConfig) -> Result<(Changeset, PerfReport)>
         .await?;
 
     let perf = report.lock().unwrap().clone();
+    // Embed the perf report inside the changeset so JSON/HTML writers include it automatically.
+    let changeset = changeset.with_perf(perf.clone());
     Ok((changeset, perf))
 }
 
