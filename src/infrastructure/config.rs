@@ -212,8 +212,10 @@ mod tests {
         map.insert("DIFFLY_SOURCE__PORT".to_string(), "9999".to_string());
 
         let cfg = Config::builder()
-            .set_default("source.dbname", "default").unwrap()
-            .set_default("source.port", 5432i64).unwrap()
+            .set_default("source.dbname", "default")
+            .unwrap()
+            .set_default("source.port", 5432i64)
+            .unwrap()
             .add_source(
                 Environment::with_prefix("DIFFLY")
                     .prefix_separator("_")
@@ -447,7 +449,7 @@ dir = "/var/output"
                 ("DIFFLY_SOURCE__DBNAME", "file_db"),
                 ("DIFFLY_SOURCE__USER", "u"),
                 ("DIFFLY_SOURCE__PASSWORD", "p"),
-                ("DIFFLY_TARGET__HOST", "remote.host"),  // overridden
+                ("DIFFLY_TARGET__HOST", "remote.host"), // overridden
                 ("DIFFLY_TARGET__PORT", "5432"),
                 ("DIFFLY_TARGET__DBNAME", "file_tgt"),
                 ("DIFFLY_TARGET__USER", "u"),
@@ -455,8 +457,8 @@ dir = "/var/output"
             ]),
         )
         .unwrap();
-        assert_eq!(cfg_with_env_only.source.dbname, "file_db");    // untouched
-        assert_eq!(cfg_with_env_only.target.host, "remote.host");  // overridden
+        assert_eq!(cfg_with_env_only.source.dbname, "file_db"); // untouched
+        assert_eq!(cfg_with_env_only.target.host, "remote.host"); // overridden
         drop(f);
     }
 
@@ -507,7 +509,14 @@ excluded_columns = ["created_at", "updated_at"]
 
     // ── DbConfig::url ─────────────────────────────────────────────────────────
 
-    fn make_db(driver: &str, user: &str, password: &str, host: &str, port: u16, dbname: &str) -> DbConfig {
+    fn make_db(
+        driver: &str,
+        user: &str,
+        password: &str,
+        host: &str,
+        port: u16,
+        dbname: &str,
+    ) -> DbConfig {
         DbConfig {
             driver: driver.to_string(),
             user: user.to_string(),
@@ -552,7 +561,14 @@ excluded_columns = ["created_at", "updated_at"]
     #[test]
     fn url_special_chars_in_password_are_encoded() {
         // Password from the real diffly.toml fixture
-        let db = make_db("postgres", "postgres", "9LAXxW<A#zR?FM2e$8]dpki7e_4X", "localhost", 5436, "db");
+        let db = make_db(
+            "postgres",
+            "postgres",
+            "9LAXxW<A#zR?FM2e$8]dpki7e_4X",
+            "localhost",
+            5436,
+            "db",
+        );
         let url = db.url();
         assert!(!url.contains('<'));
         assert!(!url.contains('#'));
@@ -577,7 +593,14 @@ excluded_columns = ["created_at", "updated_at"]
     #[test]
     fn url_unreserved_chars_not_encoded() {
         // - _ . ~ are unreserved and must NOT be percent-encoded
-        let db = make_db("postgres", "my_user", "pass-word.v1~", "localhost", 5432, "db");
+        let db = make_db(
+            "postgres",
+            "my_user",
+            "pass-word.v1~",
+            "localhost",
+            5432,
+            "db",
+        );
         let url = db.url();
         assert!(url.contains("my_user"));
         assert!(url.contains("pass-word.v1~"));
