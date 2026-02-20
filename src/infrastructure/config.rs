@@ -31,8 +31,9 @@ fn default_driver() -> String {
     "postgres".to_string()
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct DiffConfig {
+    #[serde(default)]
     pub tables: Vec<TableConfig>,
 }
 
@@ -131,7 +132,10 @@ impl AppConfig {
             .set_default("target.host", "localhost")?
             .set_default("target.port", 5432)?
             .set_default("target.schema", "public")?
-            .set_default("output.dir", "./output")?;
+            .set_default("output.dir", "./output")?
+            // `diff.tables` defaults to an empty list so that env-only configs
+            // (no TOML file) succeed deserialization on CI where no diffly.toml exists.
+            .set_default("diff.tables", Vec::<String>::new())?;
 
         // Sources are added lowest → highest priority (later = wins).
 
