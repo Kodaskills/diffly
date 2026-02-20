@@ -60,6 +60,14 @@
   .op-delete { border-left: 3px solid var(--red-border); }
   .search-box { padding:0.3rem 0.5rem; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); }
   .actions { display:flex; gap:.5rem; align-items:center; }
+  /* ─── Performance section ─────────────────────────────────── */
+  .perf-section { margin-bottom: 2rem; }
+  .perf-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .perf-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.75rem; display: flex; gap: 0.5rem; }
+  .perf-op { color: var(--muted); font-family: 'SF Mono', monospace; font-size: 0.8rem; }
+  .perf-fast .perf-duration { color: var(--green-text); }
+  .perf-medium .perf-duration { color: var(--orange-text); }
+  .perf-slow .perf-duration { color: var(--red-text); font-weight: 700; }
   @media print { body { background:white; color:black; } .toggle { display:none; } .table-section { page-break-inside: avoid; } }
 </style>
 

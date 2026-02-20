@@ -187,8 +187,8 @@ pub fn print_perf_summary(report: &PerfReport) {
 
     println!(
         "  Total: {} row(s) fetched  ·  {} ms elapsed",
-        report.total_rows_fetched().to_string().bold(),
-        format_duration(report.total_ms()),
+        report.total_rows_fetched.to_string().bold(),
+        format_duration(report.total_ms),
     );
     println!();
 }

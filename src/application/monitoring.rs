@@ -12,7 +12,7 @@ use tracing::{info, instrument};
 // ─── PerfReport ──────────────────────────────────────────────────────────────
 
 /// A single timed operation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct OpTiming {
     /// Operation name: "fetch_rows" or "diff_table".
     pub operation: &'static str,
@@ -29,9 +29,11 @@ pub struct OpTiming {
 /// Shared across all decorator instances for one run via `Arc<Mutex<_>>`.
 /// After the run, pass to [`crate::presentation::cli_summary::print_perf_summary`]
 /// to render a human-readable table.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, serde::Serialize)]
 pub struct PerfReport {
     pub timings: Vec<OpTiming>,
+    pub total_rows_fetched: usize,
+    pub total_ms: u128,
 }
 
 impl PerfReport {
@@ -41,22 +43,12 @@ impl PerfReport {
 
     fn record(report: &Arc<Mutex<Self>>, timing: OpTiming) {
         if let Ok(mut r) = report.lock() {
+            r.total_ms += timing.duration_ms;
+            if timing.operation == "fetch_rows" {
+                r.total_rows_fetched += timing.rows;
+            }
             r.timings.push(timing);
         }
-    }
-
-    /// Total elapsed time across all operations.
-    pub fn total_ms(&self) -> u128 {
-        self.timings.iter().map(|t| t.duration_ms).sum()
-    }
-
-    /// Total rows fetched (fetch_rows operations only).
-    pub fn total_rows_fetched(&self) -> usize {
-        self.timings
-            .iter()
-            .filter(|t| t.operation == "fetch_rows")
-            .map(|t| t.rows)
-            .sum()
     }
 }
 

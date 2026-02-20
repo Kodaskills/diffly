@@ -16,8 +16,9 @@ use std::path::Path;
     version
 )]
 struct Cli {
-    #[arg(short, long, default_value = "diffly.toml", global = true)]
-    config: String,
+    /// Path to a TOML config file. Overrides ./diffly.toml and ~/.config/diffly/diffly.toml.
+    #[arg(short, long, global = true)]
+    config: Option<String>,
 
     /// Enable debug-level tracing (overrides RUST_LOG).
     #[arg(long, global = true, conflicts_with = "quiet")]
@@ -92,7 +93,7 @@ async fn main() -> Result<()> {
 
     diffly::init_tracing(level);
 
-    let cfg = AppConfig::load(&cli.config)?;
+    let cfg = AppConfig::load(cli.config.as_deref())?;
     let quiet = cli.quiet;
 
     match cli.command {

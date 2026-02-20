@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
 async fn from_config_file(path: &str) -> Result<()> {
     println!("=== Pattern 1: from config file ({path}) ===\n");
 
-    let cfg = AppConfig::load(path)?;
+    let cfg = AppConfig::load(Some(path))?;
     let changeset = diffly::run(&cfg).await?;
 
     // Write all three output formats (JSON / SQL / HTML)

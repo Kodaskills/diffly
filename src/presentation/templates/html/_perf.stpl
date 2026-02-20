@@ -1,0 +1,34 @@
+<% if let Some(perf) = &changeset.perf { %>
+<% if !perf.timings.is_empty() { %>
+<div class="perf-section">
+  <h2 class="perf-title">⏱ Performance</h2>
+  <div class="perf-meta">
+    <span><strong><%= perf.total_rows_fetched %></strong> row(s) fetched</span>
+    <span>·</span>
+    <span><strong><%= perf.total_ms %> ms</strong> total elapsed</span>
+  </div>
+  <div class="table-section" style="margin-bottom:1.5rem;">
+    <table id="perf-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable(this)">Operation</th>
+          <th onclick="sortTable(this)">Table</th>
+          <th onclick="sortTable(this)" style="text-align:right">Rows</th>
+          <th onclick="sortTable(this)" style="text-align:right">Time (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for t in &perf.timings { %>
+        <tr class="<% if t.duration_ms >= 1000 { %>perf-slow<% } else if t.duration_ms >= 100 { %>perf-medium<% } else { %>perf-fast<% } %>">
+          <td class="perf-op"><%= t.operation %></td>
+          <td><strong><%= t.table %></strong></td>
+          <td style="text-align:right;font-family:'SF Mono',monospace"><%= t.rows %></td>
+          <td style="text-align:right;font-family:'SF Mono',monospace" class="perf-duration"><%= t.duration_ms %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+<% } %>

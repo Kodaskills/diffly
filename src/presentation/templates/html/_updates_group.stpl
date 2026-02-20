@@ -8,7 +8,7 @@
     </thead>
     <tbody>
       <% for row in rows { %>
-        <% let pk_str = row.pk.iter().map(|(k, v)| format!("{}={}", k, v)).collect::<Vec<_>>().join(", "); %>
+        <% let pk_str = table.primary_key.iter().filter_map(|k| row.pk.get(k).map(|v| format!("{}={}", k, v))).collect::<Vec<_>>().join(", "); %>
         <% for (i, col_diff) in row.changed_columns.iter().enumerate() { %>
           <tr class="op-update">
             <% if i == 0 { %>
